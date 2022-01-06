@@ -23,3 +23,24 @@ def make_map(bbox, projection=ccrs.PlateCarree()):
     gl.yformatter = LATITUDE_FORMATTER
     
     return fig, ax
+
+print("TEST")
+DataAccessLayer.changeEDEXHost("edex-cloud.unidata.ucar.edu")
+request = DataAccessLayer.newDataRequest()
+request.setDatatype("warning")
+request.setParameters('phensig')
+times = DataAccessLayer.getAvailableTimes(request)
+
+#Retrieve records for 50 most recent available times
+
+response = DataAccessLayer.getGeometryData(request, times[-50:-1])
+print("Using " + str(len(response))  + " records")
+
+#Records as numpy arrays
+
+parameters = {}
+
+for x in request.getParameters():
+    parameters[x] = np.array([])
+
+print(parameters)
