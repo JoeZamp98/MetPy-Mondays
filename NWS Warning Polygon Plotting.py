@@ -1,6 +1,7 @@
 from awips.dataaccess import DataAccessLayer
 from awips.tables import vtec
 from datetime import datetime
+import matplotlib
 import numpy as np
 import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
@@ -44,3 +45,45 @@ for x in request.getParameters():
     parameters[x] = np.array([])
 
 print(parameters)
+
+bbox = [-127, -64, 24, 49]
+fig, ax = make_map(bbox=bbox)
+
+siteids = np.array([])
+periods = np.array([])
+reftimes = np.array([])
+
+for ob in response: 
+
+    poly = ob.getGeometry()
+    site = ob.getLocationName()
+    pd = ob.getDataTime()
+    ref = ob.getDataTime().getRefTime()
+
+    #avoid plotting if phensig is blank (SPS)
+    if ob.getString('phensig'):
+
+        phensigString = ob.getString('phensig')
+
+        siteids = np.append(siteids, site)
+        periods = np.append(periods, pd)
+        reftimes = np.append(reftimes, ref)
+
+        for param in parameters:
+            parameters[param] = np.append(parameters[param], ob.getString(param))
+
+        if poly.geom_type == 'MultiPolygon':
+            geometries = np.array([])
+            geometries = np.append(geometries, MultiPolygon(poly))
+            geom_count = ", " + str(len(geometries)) + " geometries"
+        else:
+            geometries = np.array([])
+            geometries = np.append(geometries, Polygon(poly))
+            geom_count=""
+
+        for geom in geometries:
+            bounds = Polygon(geom)
+            intersection = bounds.intersection
+            geoms = (intersection(geom)
+                for geom in geometries
+                if bounds.intersects(geom))
